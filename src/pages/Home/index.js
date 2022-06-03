@@ -8,6 +8,10 @@ import {
   FlatList,
 } from 'react-native';
 
+import * as Animatable from 'react-native-animatable';
+
+const FlatListAnimated = Animatable.createAnimatableComponent(FlatList)
+
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -22,6 +26,7 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const [favCategory, setFavCategory] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -43,30 +48,36 @@ export default function Home() {
     loadFavorite();
   }, []);
 
-  // Favoritauma categoria
+  // Favorita uma categoria
   async function handleFavorite(id) {
     const response = await setFavorite(id);
     setFavCategory(response);
-    //alert('Categoria Favoritada!');
   }
 
   async function getListPosts() {
+    setLoading(true);
+
     const response = await api.get(
       'api/posts?populate=cover&sort=createdAt:desc'
     );
     setPosts(response.data.data);
+
+    setLoading(false);
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.name}>DevBlog</Text>
+        <Animatable.Text style={styles.name} animation="fadeInLeft" >DevBlog</Animatable.Text>
+
         <TouchableOpacity onPress={() => navigation.navigate('Search')}>
           <Feather name='search' size={25} color='#FFF' />
         </TouchableOpacity>
       </View>
 
-      <FlatList
+      <FlatListAnimated
+        animation="flipInX"
+        delay={500}
         showsHorizontalScrollIndicator={false}
         horizontal={true}
         contentContainerStyle={{ paddingRight: 12 }}
@@ -109,6 +120,8 @@ export default function Home() {
           data={posts}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => <PostItem data={item} />}
+          refreshing={loading}
+          onRefresh={() => getListPosts()}
         />
       </View>
     </SafeAreaView>
